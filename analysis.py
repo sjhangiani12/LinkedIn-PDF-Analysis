@@ -1,19 +1,28 @@
-import PyPDF2
+'''
+Created on Nov 06, 2017
+Scrapes through LinkedIn Profile's PDF and extracts data relative to each section.
+All data is stored in a Panda DataFrame as generated below. 
+
+@author: Sharan Jhangiani
+@contact: sharan@uw.edu
+
+If questions, email above.
+'''
+
 from bs4 import BeautifulSoup
 import pandas as pd
 import glob, os
 import subprocess
 from cStringIO import StringIO
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams
-from pdfminer.pdfpage import PDFPage
 
 globalExperienceCount = 0
 globalEducationCount = 0
 
+
+#set directory where PDFs are located
 os.chdir("/Users/sharan/Google Drive/College/Extra Curriculars/PDFs Temp Storage")
 
+#convert all PDFs to HTML files for more accurate analysis 
 for file in glob.glob("*.pdf"):
     currFile = open(file, 'rv')
     name = currFile.name
@@ -21,6 +30,7 @@ for file in glob.glob("*.pdf"):
 
 index = []
 
+#count instances and analyze all the html files 
 for file in glob.glob("*.html"):
         htmlFile = open(file, 'rv').read()
         soup = BeautifulSoup(htmlFile, "lxml")
@@ -40,7 +50,7 @@ for file in glob.glob("*.html"):
         #experience section
         experienceString = stringAll[indexOfExperienceHTML : indexOfEducationHTML]
 
-        #find the experience count
+        #find the number of  experience columns needed
         experienceCountString = experienceString
         experienceCount = 0
         while "ff1 fs4 fc0 sc0 ls0 ws0" in experienceCountString:
@@ -49,14 +59,13 @@ for file in glob.glob("*.html"):
                         if year and "ff1 fs4 fc0 sc0 ls0 ws0" in experienceCountString:
                                         experienceCount+= 1
                                         experienceCountString = experienceCountString[experienceCountString.find("ff1 fs4 fc0 sc0 ls0 ws0") + 60 :]
-
         if experienceCount > globalExperienceCount:
                 globalExperienceCount = experienceCount
 
         #education section
         educationString =  stringAll[indexOfEducationHTML : ]
 
-        #find the education count
+        #find the number of edcuation columns needed
         educationCountString = educationString
         educationCount = 0
         while "ff1 fs4 fc0 sc0 ls0 ws0" in educationCountString:
@@ -69,6 +78,8 @@ for file in glob.glob("*.html"):
         if educationCount > globalEducationCount:
                 globalEducationCount = educationCount
 
+
+#set the columns in the pandas dataframe based on the number achieved above
 column = ["Summary"]
 indexExperience = 0
 while indexExperience < globalExperienceCount:
@@ -81,20 +92,21 @@ indexEducation = 0
 while indexEducation < globalEducationCount:
         column.append("Name of School " + str(indexEducation + 1))
         column.append("Education Date " + str(indexEducation + 1))
+        column.append("Education Type " + str(indexEducation + 1))
         column.append("Education Description " + str(indexEducation + 1))
         indexEducation += 1
 
+#create the pandas DataFrame
 df = pd.DataFrame(index=index, columns=column)
 
-
-
+#Analyze and extract the data from the html files
 for file in glob.glob("*.html"):
         htmlFile = open(file, 'rv').read()
         soup = BeautifulSoup(htmlFile, "lxml")
         stringAll = str(soup)
         mutableString = stringAll
 
-        #find the name
+        #find the name to use as a index 
         nameStart = stringAll[stringAll.find("fs1 fc1 sc0 ls0 ws0") + 21 :]
         newName = nameStart[ : nameStart.find("<")]
         name = stringAll[stringAll.find("fs1 fc1 sc0 ls0 ws0") + 21 : stringAll[stringAll.find("fs1 fc1 sc0 ls0 ws0") + 21 :].find("<")]
@@ -103,8 +115,8 @@ for file in glob.glob("*.html"):
         indexOfExperienceHTML = indexOfSummaryHTML + stringAll[indexOfSummaryHTML + 25 :].find("ff1 fs3 fc2 sc0 ls0 ws0") + 25
         indexOfEducationHTML = indexOfExperienceHTML + stringAll[indexOfExperienceHTML + 25 :].find("ff1 fs3 fc2 sc0 ls0 ws0") + 25
 
-        summary = ""
         #find and set the summary into the dataframe
+        summary = ""
         stringSummary = mutableString[indexOfSummaryHTML : indexOfExperienceHTML]
         while "ff1 fs4 fc0 sc0 ls0 ws0" in stringSummary:
                indexOfSummaryStart = stringSummary.find("ff1 fs4 fc0 sc0 ls0 ws0") + 25
@@ -169,7 +181,6 @@ for file in glob.glob("*.html"):
                                 indexEducationTitle += 1 
                 else:
                         indexEducationTitle += 1
-
         educationDescription = ""
         while "ff2 fs4 fc0 sc0 ls0 ws0" in stringEducationTitle: 
                         indexOfEducationTitleStart = stringEducationTitle.find("ff2 fs4 fc0 sc0 ls0 ws0") + 25
@@ -192,9 +203,13 @@ for file in glob.glob("*.html"):
                         indexOfEducationDateStart = stringEducationDate.find("ff1 fs4 fc0 sc0 ls0 ws0") + 25
                         stringEducationDate = stringEducationDate[indexOfEducationDateStart :]
                         indexOfEducationEndDate = stringEducationDate.find("<")
-                        educationDate = stringEducationDate[ : indexOfEducationEndDate]
+                        educationDateWithType = stringEducationDate[ : indexOfEducationEndDate]
+                        educationReverse = educationDateWithType[::-1]
+                        educationDate = educationReverse[: educationReverse.find(",")][::-1]
+                        educationType = educationDateWithType[ : educationDateWithType.find(educationDate)]
                         if "-" in educationDate:
                                 df.set_value(newName, "Education Date " + str(indexEducationDate + 1), educationDate)
+                        df.set_value(newName, "Education Type " + str(indexEducationDate + 1), educationType)
                 indexEducationDate += 1
 
 print df
