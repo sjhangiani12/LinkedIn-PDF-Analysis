@@ -1,7 +1,7 @@
 '''
 Created on Nov 06, 2017
 Scrapes through LinkedIn Profile's PDF and extracts data relative to each section.
-All data is stored in a Panda DataFrame as generated below. 
+All data extracted is stored in a Panda DataFrame as generated below. 
 
 @author: Sharan Jhangiani
 @contact: sharan@uw.edu
@@ -93,7 +93,7 @@ while indexEducation < globalEducationCount:
         column.append("Name of School " + str(indexEducation + 1))
         column.append("Education Date " + str(indexEducation + 1))
         column.append("Education Type " + str(indexEducation + 1))
-        column.append("Education Description " + str(indexEducation + 1))
+        column.append("Education Activities and Societies  " + str(indexEducation + 1))
         indexEducation += 1
 
 #create the pandas DataFrame
@@ -175,7 +175,7 @@ for file in glob.glob("*.html"):
                                 stringEducationTitle = stringEducationTitle[educationDescriptionStart :]
                                 educationDescriptionEnd = stringEducationTitle.find("<")
                                 educationDescription = stringEducationTitle[: educationDescriptionEnd]
-                                df.set_value(newName, "Education Description " + str(indexEducationTitle), educationDescription)
+                                df.set_value(newName, "Education Activities and Societies " + str(indexEducationTitle), educationDescription)
                         else: 
                                 df.set_value(newName, "Name of School " + str(indexEducationTitle + 1), educationTitle)
                                 indexEducationTitle += 1 
@@ -192,7 +192,7 @@ for file in glob.glob("*.html"):
                                 stringEducationTitle = stringEducationTitle[educationDescriptionStart :]
                                 educationDescriptionEnd = stringEducationTitle.find("<")
                                 educationDescription += stringEducationTitle[: educationDescriptionEnd]
-                                df.set_value(newName, "Education Description " + str(indexEducationTitle), educationDescription)
+                                df.set_value(newName, "Education Activities and Societies  " + str(indexEducationTitle), educationDescription)
 
         #find and set education date
         educationDate = ""
@@ -211,5 +211,5 @@ for file in glob.glob("*.html"):
                                 df.set_value(newName, "Education Date " + str(indexEducationDate + 1), educationDate)
                         df.set_value(newName, "Education Type " + str(indexEducationDate + 1), educationType)
                 indexEducationDate += 1
-print df
+print df["Allison Cassels"]["Education Type "]
 print "DataFrame generated. SUCCESS."
