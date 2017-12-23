@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import glob, os
 import subprocess
-from cStringIO import StringIO
 
 globalExperienceCount = 0
 globalEducationCount = 0
@@ -211,5 +210,5 @@ for file in glob.glob("*.html"):
                                 df.set_value(newName, "Education Date " + str(indexEducationDate + 1), educationDate)
                         df.set_value(newName, "Education Type " + str(indexEducationDate + 1), educationType)
                 indexEducationDate += 1
-print df["Allison Cassels"]["Education Type "]
+print df
 print "DataFrame generated. SUCCESS."
